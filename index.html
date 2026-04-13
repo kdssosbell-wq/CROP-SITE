@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>내맘대로 사진 크롭!</title>
+
+    <!-- 소셜 미리보기 (Open Graph) -->
+    <meta property="og:title"       content="내맘대로 사진 크롭!">
+    <meta property="og:description" content="원형·사각형·별·하트 모양으로 사진을 크롭하고 저장하세요.">
+    <meta property="og:image"       content="https://i.postimg.cc/GpvQ4Qr2/og-image.png">
+    <meta property="og:type"        content="website">
+    <meta name="twitter:card"       content="summary_large_image">
+    <meta name="twitter:image"      content="https://i.postimg.cc/GpvQ4Qr2/og-image.png">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', 'Apple SD Gothic Neo', sans-serif;
+            min-height: 100vh;
+            background: #f7f8fc;
+            background-image: linear-gradient(135deg,
+                rgba(102,126,234,0.18) 0%,
+                rgba(240,147,251,0.12) 60%,
+                rgba(56,249,215,0.10) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 12px 40px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 20px 16px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 24px rgba(100,80,200,0.10), 0 1px 4px rgba(0,0,0,0.06);
+            max-width: 520px;
+            width: 100%;
+            border: 1px solid rgba(200,200,220,0.5);
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #2d2d3a;
+            margin-bottom: 18px;
+            letter-spacing: -0.3px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #9a9ab0;
+            align-self: flex-start;
+            margin-bottom: 8px;
+            margin-top: 14px;
+        }
+        .section-label:first-of-type { margin-top: 0; }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: #ebebf2;
+            margin: 14px 0 4px;
+        }
+
+        /* ── 버튼 ── */
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 11px 18px;
+            cursor: pointer;
+            border: 1.5px solid #e0e0ec;
+            border-radius: 50px;
+            background: #f5f5fb;
+            color: #444;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.15s;
+            white-space: nowrap;
+            /* 모바일 탭 최소 높이 확보 */
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        .btn:hover {
+            background: #ededf8;
+            border-color: #c0bfe8;
+        }
+        .btn.active {
+            background: linear-gradient(135deg, #667eea, #9b59f5);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 3px 10px rgba(102,126,234,0.35);
+        }
+
+        .btn-upload {
+            background: #f0f4ff;
+            border-color: #c5d0f5;
+            color: #4a5fc4;
+        }
+        .btn-upload:hover { background: #e3eaff; border-color: #a5b4f0; }
+
+        .btn-save {
+            background: linear-gradient(135deg, #43e97b, #38c9a0);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(56,201,160,0.3);
+        }
+        .btn-save:hover {
+            background: linear-gradient(135deg, #2ecc71, #27ae8f);
+            border-color: transparent;
+            color: #fff;
+            filter: none;
+            box-shadow: 0 5px 16px rgba(46,204,113,0.45);
+        }
+
+        input[type="file"] { display: none; }
+
+        /* ── 배경색 스와치 ── */
+        .swatch-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            width: 100%;
+            align-items: center;
+        }
+        .swatch {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #e0e0ec;
+            transition: all 0.15s;
+            flex-shrink: 0;
+            /* 모바일 탭 영역 확보 */
+            touch-action: manipulation;
+        }
+        .swatch:hover { transform: scale(1.12); border-color: #9b9be8; }
+        .swatch.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.3);
+            transform: scale(1.1);
+        }
+        .swatch-label { font-size: 12px; color: #9a9ab0; font-weight: 600; }
+
+        .sw-transparent {
+            background:
+                linear-gradient(45deg,#ccc 25%,transparent 25%),
+                linear-gradient(-45deg,#ccc 25%,transparent 25%),
+                linear-gradient(45deg,transparent 75%,#ccc 75%),
+                linear-gradient(-45deg,transparent 75%,#ccc 75%);
+            background-size: 10px 10px;
+            background-position: 0 0,0 5px,5px -5px,-5px 0;
+            background-color: #fff;
+        }
+        .sw-white  { background: #ffffff; }
+        .sw-black  { background: #1a1a2e; }
+        .sw-gray   { background: #8c8ca1; }
+        .sw-pink   { background: linear-gradient(135deg,#f093fb,#f5576c); }
+        .sw-blue   { background: linear-gradient(135deg,#4facfe,#00f2fe); }
+        .sw-gold   { background: linear-gradient(135deg,#f7971e,#ffd200); }
+        .sw-green  { background: linear-gradient(135deg,#56ab2f,#a8e063); }
+
+        /* ── 캔버스 ── */
+        .canvas-wrap {
+            width: 100%;
+            margin-top: 18px;
+        }
+        canvas {
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(100,80,200,0.13);
+            cursor: grab;
+            display: block;
+            width: 100%;   /* CSS로 반응형 */
+            height: auto;
+            touch-action: none; /* 브라우저 기본 터치 동작 차단 */
+        }
+        canvas:active { cursor: grabbing; }
+
+        /* ── 안내 텍스트 ── */
+        .hint {
+            margin-top: 14px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+        .hint-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13.5px;
+            color: #7070a0;
+            font-weight: 500;
+        }
+        .hint-icon {
+            font-size: 18px;
+        }
+        .hint-sep {
+            width: 100%;
+            height: 1px;
+            background: #ebebf2;
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>✂️ 내맘대로 사진 크롭!</h2>
+
+    <span class="section-label">사진</span>
+    <div class="btn-row">
+        <label class="btn btn-upload" for="fileInput">📁 사진 올리기</label>
+        <input type="file" id="fileInput" accept="image/*">
+        <button class="btn btn-save" onclick="downloadImage()">💾 결과 저장</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <span class="section-label">마스크 모양</span>
+    <div class="btn-row">
+        <button id="btn-circle" class="btn active" onclick="changeShape('circle')">○ 원형</button>
+        <button id="btn-rect"   class="btn"        onclick="changeShape('rect')">□ 사각형</button>
+        <button id="btn-star"   class="btn"        onclick="changeShape('star')">☆ 별형</button>
+        <button id="btn-heart"  class="btn"        onclick="changeShape('heart')">♡ 하트</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <span class="section-label">바깥 배경색</span>
+    <div class="swatch-row">
+        <div class="swatch sw-transparent active" title="투명"  onclick="changeBg('transparent',this)"></div>
+        <div class="swatch sw-white"               title="흰색"  onclick="changeBg('white',this)"></div>
+        <div class="swatch sw-black"               title="검정"  onclick="changeBg('black',this)"></div>
+        <div class="swatch sw-gray"                title="회색"  onclick="changeBg('gray',this)"></div>
+        <div class="swatch sw-pink"                title="핑크"  onclick="changeBg('pink',this)"></div>
+        <div class="swatch sw-blue"                title="파랑"  onclick="changeBg('blue',this)"></div>
+        <div class="swatch sw-gold"                title="골드"  onclick="changeBg('gold',this)"></div>
+        <div class="swatch sw-green"               title="초록"  onclick="changeBg('green',this)"></div>
+        <span class="swatch-label">크롭 바깥 배경색</span>
+    </div>
+
+    <div class="canvas-wrap">
+        <canvas id="canvas" width="460" height="460"></canvas>
+    </div>
+
+    <!-- 안내 텍스트 -->
+    <div class="hint">
+        <div class="hint-row">
+            <span class="hint-icon">☝️</span>
+            <span>한 손가락 드래그 — 사진 위치 조정</span>
+        </div>
+        <div class="hint-row">
+            <span class="hint-icon">🤏</span>
+            <span>두 손가락 핀치 — 확대 / 축소</span>
+        </div>
+        <div class="hint-row">
+            <span class="hint-icon">🖥️</span>
+            <span>PC: 마우스 드래그 + 스크롤 휠</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx    = canvas.getContext('2d');
+
+    const CW = 460, CH = 460;
+    const CX = CW / 2, CY = CH / 2;
+    const MASK_R = 160;
+
+    let img      = null;
+    let imgX     = CX, imgY = CY;
+    let imgScale = 1;
+    let shape    = 'circle';
+    let bgMode   = 'transparent';
+    let isDragging  = false;
+    let lastMX, lastMY;
+    let lastPinchDist = null;
+
+    const BG_FILLS = {
+        transparent: null,
+        white: '#ffffff',
+        black: '#1a1a2e',
+        gray:  '#8c8ca1',
+        pink:  ['#f093fb','#f5576c'],
+        blue:  ['#4facfe','#00f2fe'],
+        gold:  ['#f7971e','#ffd200'],
+        green: ['#56ab2f','#a8e063'],
+    };
+
+    // 터치 좌표 → 캔버스 내부 좌표 변환 (CSS 스케일링 보정)
+    function toCanvasCoords(clientX, clientY) {
+        const rect   = canvas.getBoundingClientRect();
+        const scaleX = CW / rect.width;
+        const scaleY = CH / rect.height;
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top)  * scaleY
+        };
+    }
+
+    function pinchDist(e) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // ── 클립 패스 ──
+    function applyClip(c, cx, cy) {
+        c.beginPath();
+        if (shape === 'circle') {
+            c.arc(cx, cy, MASK_R, 0, Math.PI * 2);
+        } else if (shape === 'rect') {
+            roundRect(c, cx - MASK_R, cy - MASK_R, MASK_R * 2, MASK_R * 2, 18);
+        } else if (shape === 'star') {
+            starPath(c, cx, cy, 5, MASK_R, MASK_R * 0.42);
+        } else if (shape === 'heart') {
+            heartPath(c, cx, cy, MASK_R);
+        }
+        c.closePath();
+    }
+
+    function roundRect(c, x, y, w, h, r) {
+        c.moveTo(x + r, y);
+        c.lineTo(x + w - r, y);
+        c.quadraticCurveTo(x + w, y, x + w, y + r);
+        c.lineTo(x + w, y + h - r);
+        c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        c.lineTo(x + r, y + h);
+        c.quadraticCurveTo(x, y + h, x, y + h - r);
+        c.lineTo(x, y + r);
+        c.quadraticCurveTo(x, y, x + r, y);
+    }
+
+    function starPath(c, cx, cy, n, outerR, innerR) {
+        for (let i = 0; i < n * 2; i++) {
+            const angle = (i * Math.PI / n) - Math.PI / 2;
+            const r = (i % 2 === 0) ? outerR : innerR;
+            if (i === 0) c.moveTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+            else c.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+        }
+    }
+
+    function heartPath(c, cx, cy, r) {
+        const rb  = r * 0.52;
+        const lc  = cx - rb;
+        const rc  = cx + rb;
+        const bcy = cy - r * 0.20;
+        const btm = cy + r * 0.90;
+
+        c.moveTo(cx, btm);
+        c.bezierCurveTo(cx - r*0.22, btm - r*0.38, lc - rb, bcy + rb*0.6, lc - rb, bcy);
+        c.arc(lc, bcy, rb, Math.PI, 0, false);
+        c.arc(rc, bcy, rb, Math.PI, 0, false);
+        c.bezierCurveTo(rc + rb, bcy + rb*0.6, cx + r*0.22, btm - r*0.38, cx, btm);
+    }
+
+    // ── 배경 채우기 ──
+    function fillBg(c, w, h) {
+        const fill = BG_FILLS[bgMode];
+        if (fill === null) return;
+        if (Array.isArray(fill)) {
+            const grd = c.createLinearGradient(0, 0, w, h);
+            grd.addColorStop(0, fill[0]);
+            grd.addColorStop(1, fill[1]);
+            c.fillStyle = grd;
+        } else {
+            c.fillStyle = fill;
+        }
+        c.fillRect(0, 0, w, h);
+    }
+
+    function drawCheckerboard() {
+        const sz = 13;
+        for (let y = 0; y < CH; y += sz) {
+            for (let x = 0; x < CW; x += sz) {
+                ctx.fillStyle = ((x/sz + y/sz) % 2 === 0) ? '#f0f0f0' : '#dcdcdc';
+                ctx.fillRect(x, y, sz, sz);
+            }
+        }
+    }
+
+    // ── 메인 렌더링 ──
+    function draw() {
+        ctx.clearRect(0, 0, CW, CH);
+
+        if (bgMode === 'transparent') drawCheckerboard();
+        else fillBg(ctx, CW, CH);
+
+        if (img) {
+            ctx.save();
+            applyClip(ctx, CX, CY);
+            ctx.clip();
+            const w = img.width  * imgScale;
+            const h = img.height * imgScale;
+            ctx.drawImage(img, imgX - w/2, imgY - h/2, w, h);
+            ctx.restore();
+        } else {
+            ctx.save();
+            applyClip(ctx, CX, CY);
+            ctx.clip();
+            ctx.fillStyle = 'rgba(200,200,220,0.35)';
+            ctx.fillRect(0, 0, CW, CH);
+            ctx.fillStyle = '#888';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('사진을 업로드해 주세요', CX, CY);
+            ctx.restore();
+        }
+
+        ctx.save();
+        applyClip(ctx, CX, CY);
+        ctx.strokeStyle = 'rgba(102,126,234,0.55)';
+        ctx.lineWidth   = 2;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // ── 사진 업로드 ──
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const image = new Image();
+            image.onload = function() {
+                img = image;
+                imgScale = (MASK_R * 2) / Math.min(img.width, img.height);
+                imgX = CX; imgY = CY;
+                draw();
+            };
+            image.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // ── 모양 / 배경 변경 ──
+    function changeShape(type) {
+        shape = type;
+        document.querySelectorAll('[id^="btn-"]').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + type).classList.add('active');
+        draw();
+    }
+    function changeBg(mode, el) {
+        bgMode = mode;
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        draw();
+    }
+
+    // ── 마우스 드래그 ──
+    canvas.addEventListener('mousedown', e => {
+        isDragging = true;
+        lastMX = e.offsetX; lastMY = e.offsetY;
+    });
+    canvas.addEventListener('mousemove', e => {
+        if (!isDragging || !img) return;
+        // offsetX는 CSS 스케일 보정 불필요 (브라우저가 처리)
+        const rect   = canvas.getBoundingClientRect();
+        const scaleX = CW / rect.width;
+        const scaleY = CH / rect.height;
+        imgX += (e.offsetX - lastMX) * scaleX;
+        imgY += (e.offsetY - lastMY) * scaleY;
+        lastMX = e.offsetX; lastMY = e.offsetY;
+        draw();
+    });
+    canvas.addEventListener('mouseup',    () => { isDragging = false; });
+    canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+    // ── 터치: 드래그(1손가락) + 핀치줌(2손가락) ──
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            lastPinchDist = pinchDist(e);
+            isDragging = false;
+        } else {
+            isDragging = true;
+            lastMX = e.touches[0].clientX;
+            lastMY = e.touches[0].clientY;
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            // 핀치 줌
+            const dist   = pinchDist(e);
+            if (lastPinchDist) {
+                const factor = dist / lastPinchDist;
+                imgScale = Math.max(0.05, Math.min(20, imgScale * factor));
+                draw();
+            }
+            lastPinchDist = dist;
+        } else if (isDragging && img && e.touches.length === 1) {
+            // 드래그
+            const p  = toCanvasCoords(e.touches[0].clientX, e.touches[0].clientY);
+            const lp = toCanvasCoords(lastMX, lastMY);
+            imgX += p.x - lp.x;
+            imgY += p.y - lp.y;
+            lastMX = e.touches[0].clientX;
+            lastMY = e.touches[0].clientY;
+            draw();
+        }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        if (e.touches.length < 2) lastPinchDist = null;
+        if (e.touches.length === 0) isDragging = false;
+    });
+
+    // ── 휠 확대/축소 (PC) ──
+    canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        const factor = e.deltaY < 0 ? 1.08 : 0.93;
+        imgScale = Math.max(0.05, Math.min(20, imgScale * factor));
+        draw();
+    }, { passive: false });
+
+    // ── 다운로드 ──
+    function downloadImage() {
+        if (!img) { alert('먼저 사진을 업로드해 주세요!'); return; }
+        const size = MASK_R * 2;
+        const off  = document.createElement('canvas');
+        off.width = size; off.height = size;
+        const oc  = off.getContext('2d');
+
+        fillBg(oc, size, size);
+
+        oc.save();
+        applyClip(oc, MASK_R, MASK_R);
+        oc.clip();
+        const w  = img.width  * imgScale;
+        const h  = img.height * imgScale;
+        const dx = (imgX - w/2) - (CX - MASK_R);
+        const dy = (imgY - h/2) - (CY - MASK_R);
+        oc.drawImage(img, dx, dy, w, h);
+        oc.restore();
+
+        const link = document.createElement('a');
+        link.download = 'cropped.png';
+        link.href = off.toDataURL('image/png');
+        link.click();
+    }
+
+    draw();
+</script>
+</body>
+</html>
